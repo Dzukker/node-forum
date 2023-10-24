@@ -1,0 +1,9 @@
+extends lay
+block cont
+        h1 Wiatj na stronie głownej
+        ul
+          each val in obj
+            li  !{val.login} !{val.password}|
+                a(href=`http://localhost:8080/del/${val.id}`) usun 
+                a(href=`/edytuj/${val.id}`) edit 
+                //- a(href=`http://localhost:8080/edit/${val.id}`) edit 
