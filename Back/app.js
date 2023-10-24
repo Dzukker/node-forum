@@ -31,6 +31,7 @@ const db = mysql.createConnection({
 passport.use(new LocalStrategy(
     (login, password, done) =>{
         const query = 'SELECT * from users WHERE login= (?)'
+        console.log("odpaliłem sie")
 
         db.query(query, [login], (err, result) =>{
             if (err) {
@@ -41,6 +42,7 @@ passport.use(new LocalStrategy(
                 return  done(null, false, {'message': 'Incorrect login'})
             }
             const user = result[0]
+            console.log("user: "+user)
             if(user.password !== password) {
                 return done(null, false, {'message': 'Incorrect password'})
             }
@@ -172,12 +174,14 @@ app.get('/users/del/:id', (req, res) =>{
 })
 
 app.post('/users/login', (req, res) =>{
-    
+    console.log(req.body.login)
+    console.log(req.body.password)
     passport.authenticate('local', {
         successRedirect: 'http://localhost:3000/',
         failureRedirect: 'http://localhost:3000/login',
         failureFlash: true
     })
+    console.log("????")
 })
 
 app.get('/users/logout', (req, res) =>{
