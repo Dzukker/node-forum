@@ -1,30 +1,23 @@
 const express = require('express')
 const mysql= require('mysql');
 const bodyParser=require('body-parser')
+const session = require('express-session');
+const passport = require('passport')
+const LocalStrategy = require('passport-local').Strategy
 
 const app = express()
 const port = 8080
 
-var sessionChecker = (req, res, next) => {    
-    console.log(`Session Checker: ${req.session.id}`.green);
-    console.log(req.session);
-    if (req.session.profile) {
-        console.log(`Found User Session`.green);
-        next();
-    } else {
-        console.log(`No User Session Found`.red);
-        res.redirect('/login');
-    }
-};
-
 app.use(bodyParser.urlencoded({extended:false}));
-
 
 app.use(session({
     secret: 'secret-key',
     resave: false,
     saveUninitialized: false,
 }));
+
+app.use(passport.initialize())
+app.use(passport.session())
 
 const db = mysql.createConnection({
   host     : 'localhost',
@@ -33,7 +26,44 @@ const db = mysql.createConnection({
   database : 'blogsite_JZ'
 });
 
+// Autentication strategy
 
+passport.use(new LocalStrategy(
+    (login, password, done) =>{
+        const query = 'SELECT * from users WHERE login= (?)'
+
+        db.query(query, [login], (err, result) =>{
+            if (err) {
+                console.error("Database error: "+err)
+                return done(err);
+            }
+            if (result.length === 0){
+                return  done(null, false, {'message': 'Incorrect login'})
+            }
+            const user = result[0]
+            if(user.password !== password) {
+                return done(null, false, {'message': 'Incorrect password'})
+            }
+            return done(null, user)
+        })
+    }
+))
+// User serialize and deserialize
+
+passport.serializeUser((user, done) =>{
+    done(null, user.id);
+})
+
+passport.deserializeUser((id, done) =>{
+    const query = 'SELECT * from users WHERE id = (?)'
+
+    db.query(query, [id], (err, result)=>{
+        if(err){
+            return done(err)
+        }
+        done(null, result[0])
+    })
+})
 // POSTS
 
 app.get('/posts/all', (req, res) =>{ 
@@ -142,25 +172,17 @@ app.get('/users/del/:id', (req, res) =>{
 })
 
 app.post('/users/login', (req, res) =>{
-    let password = req.body.password
-    let login = req.body.login
-
-    const q= `SELECT * FROM users WHERE login=${login}`;
-
-    db.query(q, (err,data)=>{
-        if(err) res.send(err);
-            if(data.password == password){
-                var profile = {
-                    'id': data.id,
-                    'login': data.login,
-                    'isAdmin': data.isAdmin
-                }
-                req.session.profile = profile;
-                res.redirect('http://localhost:3000/')
-            } else {
-                res.redirect('http://localhost:3000/login')
-            }
+    
+    passport.authenticate('local', {
+        successRedirect: 'http://localhost:3000/',
+        failureRedirect: 'http://localhost:3000/login',
+        failureFlash: true
     })
+})
+
+app.get('/users/logout', (req, res) =>{
+    req.logout()
+    res.redirect('http://localhost:3000/')
 })
 
 app.post('/users/add', (req, res) =>{ 
