@@ -26,46 +26,6 @@ const db = mysql.createConnection({
   database : 'blogsite_JZ'
 });
 
-// Autentication strategy
-
-passport.use(new LocalStrategy(
-    (login, password, done) =>{
-        const query = 'SELECT * from users WHERE login= (?)'
-        console.log("odpaliłem sie")
-
-        db.query(query, [login], (err, result) =>{
-            if (err) {
-                console.error("Database error: "+err)
-                return done(err);
-            }
-            if (result.length === 0){
-                return  done(null, false, {'message': 'Incorrect login'})
-            }
-            const user = result[0]
-            console.log("user: "+user)
-            if(user.password !== password) {
-                return done(null, false, {'message': 'Incorrect password'})
-            }
-            return done(null, user)
-        })
-    }
-))
-// User serialize and deserialize
-
-passport.serializeUser((user, done) =>{
-    done(null, user.id);
-})
-
-passport.deserializeUser((id, done) =>{
-    const query = 'SELECT * from users WHERE id = (?)'
-
-    db.query(query, [id], (err, result)=>{
-        if(err){
-            return done(err)
-        }
-        done(null, result[0])
-    })
-})
 // POSTS
 
 app.get('/posts/all', (req, res) =>{ 
@@ -173,21 +133,51 @@ app.get('/users/del/:id', (req, res) =>{
     })
 })
 
-app.post('/users/login', (req, res) =>{
-    console.log(req.body.login)
-    console.log(req.body.password)
-    passport.authenticate('local', {
-        successRedirect: 'http://localhost:3000/',
-        failureRedirect: 'http://localhost:3000/login',
-        failureFlash: true
+
+// Logowanie i logowanie
+const cookieParser = require('cookie-parser')
+app.use(cookieParser());
+
+app.post("/users/register", (req, res) =>
+{
+    console.log(req.body.login, req.body.password)
+    // const q='INSERT INTO users (login, password, Admin) VALUES (?)'
+    console.log("Wpisz bazę danych!")
+    // Wpisz tutaj swoją bazę danych (nie mam na gitcie)
+
+    const val=[req.body.login,req.body.password,0]
+    db.query(q,[val],(err,data)=>{
+        if(err) res.send(err);
+        return res.redirect('http://localhost:8888/')
     })
-    console.log("????")
+  
 })
 
-app.get('/users/logout', (req, res) =>{
-    req.logout()
-    res.redirect('http://localhost:3000/')
+app.post("/users/login", (req, res)=>
+{
+//    const q= 'SELECT * FROM `users` WHERE login = "'+req.body.login+'" and password = "'+req.body.password+'"'
+       console.log("Wpisz bazę danych!")
+       // Wpisz tutaj swoją bazę danych (nie mam na gitcie)
+   db.query(q,(err,data)=>{
+        if(err) res.send(err);
+        if(data.lenght != null) console.log(data)
+        else console.log("nie ma")
+        res.cookie('Zalogowany', data[0]["id"]);
+        res.cookie('Admin', data[0]["Admin"]);
+
+        console.log(req.cookies)
+
+
+        return res.redirect('http://localhost:8888/')
+    
 })
+})
+
+// app.get('/users/logout', (req, res) =>{
+//     req.logout()
+//     res.redirect('http://localhost:3000/')
+// })
+// Możesz to zrobić na froncie poprzez usunięcie ciasteczka 
 
 app.post('/users/add', (req, res) =>{ 
      const q='INSERT INTO users(login,password) VALUES (?)';
