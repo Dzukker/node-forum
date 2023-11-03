@@ -21,6 +21,17 @@ route.get('/login', (req, res) =>{
     res.render('login')
 })
 
+route.get('/list', (req, res) =>{
+    axios.get('http://localhost:8080/users/all')
+    .then((response) => {
+        res.render('list', {obj:response.data})
+    })
+    .catch( (err)=>{
+        res.send(err)
+    })
+    
+})
+
 route.get('/test', (req,res)=>{
 
 })
