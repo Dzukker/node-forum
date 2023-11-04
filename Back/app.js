@@ -1,23 +1,13 @@
 const express = require('express')
 const mysql= require('mysql');
 const bodyParser=require('body-parser')
-const session = require('express-session');
-const passport = require('passport')
-const LocalStrategy = require('passport-local').Strategy
+const cookieParser = require('cookie-parser')
 
 const app = express()
 const port = 8080
 
+app.use(cookieParser())
 app.use(bodyParser.urlencoded({extended:false}));
-
-app.use(session({
-    secret: 'secret-key',
-    resave: false,
-    saveUninitialized: false,
-}));
-
-app.use(passport.initialize())
-app.use(passport.session())
 
 const db = mysql.createConnection({
   host     : 'localhost',
@@ -57,7 +47,7 @@ app.get('/posts/del/:id', (req, res) =>{
 
 app.post('/posts/add', (req, res) =>{ 
     const q='INSERT INTO `posts`(`user_id`, `title`, `content`) VALUES (?)';
-    const values=[req.body.user_id, req.body.title, req.body.content];
+    const values=[req.cookies["Zalogowany"], req.body.title, req.body.content];
 
     db.query(q,[values],(err,data)=>{
         if(err) res.send(err);
@@ -135,8 +125,6 @@ app.get('/users/del/:id', (req, res) =>{
 
 
 // Logowanie i logowanie
-const cookieParser = require('cookie-parser')
-app.use(cookieParser());
 
 app.post("/users/register", (req, res) =>
 {
@@ -155,29 +143,21 @@ app.post("/users/register", (req, res) =>
 
 app.post("/users/login", (req, res)=>
 {
-//    const q= 'SELECT * FROM `users` WHERE login = "'+req.body.login+'" and password = "'+req.body.password+'"'
-       console.log("Wpisz bazę danych!")
-       // Wpisz tutaj swoją bazę danych (nie mam na gitcie)
+   const q= 'SELECT * FROM `users` WHERE login = "'+req.body.login+'" and password = "'+req.body.password+'"'
    db.query(q,(err,data)=>{
         if(err) res.send(err);
         if(data.lenght != null) console.log(data)
         else console.log("nie ma")
         res.cookie('Zalogowany', data[0]["id"]);
-        res.cookie('Admin', data[0]["Admin"]);
+        res.cookie('Admin', data[0]["is_admin"]);
 
         console.log(req.cookies)
 
 
-        return res.redirect('http://localhost:8888/')
+        return res.redirect('http://localhost:3000/')
     
 })
 })
-
-// app.get('/users/logout', (req, res) =>{
-//     req.logout()
-//     res.redirect('http://localhost:3000/')
-// })
-// Możesz to zrobić na froncie poprzez usunięcie ciasteczka 
 
 app.post('/users/add', (req, res) =>{ 
      const q='INSERT INTO users(login,password) VALUES (?)';
@@ -192,7 +172,8 @@ app.post('/users/add', (req, res) =>{
 app.post('/users/update/:id', (req, res) =>{ 
 
     let has=req.body.password;
-    const q='UPDATE moja SET login="'+log+'", password="'+has+'" WHERE id='+req.params.id;
+    let log=req.body.login;
+    const q='UPDATE users SET login="'+log+'", password="'+has+'" WHERE id='+req.params.id;
 
     db.query(q,(err,data)=>{
         if(err) res.send(err);

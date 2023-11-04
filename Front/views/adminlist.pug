@@ -1,0 +1,9 @@
+extends lay
+block cont
+        h1 Admin User Control
+        ul
+          each val in obj
+            li  !{val.login}|
+                a(href=`http://localhost:8080/del/${val.id}`) usun 
+                a(href=`/edit/${val.id}`) edit 
+                //- a(href=`http://localhost:8080/edit/${val.id}`) edit 

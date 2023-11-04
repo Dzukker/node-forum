@@ -1,0 +1,8 @@
+extends lay 
+block cont 
+    form(action=`http://localhost:8080/posts/add` method="post")
+        input(type="text", name="title")
+        br
+        input(type="text", name="content" rows="5")
+        br
+        input(type="submit", value="SEND")

@@ -1,0 +1,6 @@
+extends lay
+block cont
+    form(action=`http://localhost:8080/users/update/${obj[0].id}` method="post")
+        input(type="text", name="login" value=`${obj[0].login}`)
+        input(type="text", name="password" value=`${obj[0].password}`)
+        input(type="submit", value="UPDATE")
