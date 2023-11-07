@@ -149,7 +149,7 @@ app.post("/users/login", (req, res)=>
         if(data.lenght != null) console.log(data)
         else console.log("nie ma")
         res.cookie('Zalogowany', data[0]["id"]);
-        res.cookie('Admin', data[0]["is_admin"]);
+        res.cookie('Admin', data[0]["isAdmin"]);
 
         console.log(req.cookies)
 
